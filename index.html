@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ココカラ自然｜中高生のための自然アクティビティ検索</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Yusei+Magic&family=Zen_Maru_Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        }
+        .font-title {
+            font-family: 'Kiwi Maru', serif;
+        }
+        .font-magic {
+            font-family: 'Yusei Magic', sans-serif;
+        }
+        /* スムーズなアニメーション */
+        .card-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-transition:hover {
+            transform: translateY(-6px);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-12">
+
+    <!-- ヘッダー -->
+    <header class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchMode('all')">
+                <div class="bg-white text-emerald-600 p-2 rounded-full shadow-inner flex items-center justify-center w-9 h-9">
+                    <i class="fa-solid fa-compass text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold font-title tracking-wider">ココカラ自然</h1>
+                    <p class="text-[9px] opacity-90 -mt-1 font-sans">鳥取・近隣エリア 自然アクティビティ</p>
+                </div>
+            </div>
+            
+            <!-- ナビゲーション・カウンターボタン -->
+            <div class="flex items-center space-x-2">
+                <!-- お気に入り -->
+                <button onclick="switchMode('favorites')" id="fav-filter-btn" class="flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all">
+                    <i class="fa-solid fa-heart text-pink-400"></i>
+                    <span class="hidden sm:inline">お気に入り</span>
+                    <span>(<span id="fav-count">0</span>)</span>
+                </button>
+                <!-- マイ予約 -->
+                <button onclick="switchMode('bookings')" id="booking-filter-btn" class="flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all">
+                    <i class="fa-solid fa-calendar-check text-amber-300"></i>
+                    <span class="hidden sm:inline">マイ予約</span>
+                    <span>(<span id="booking-count">0</span>)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+
+        <!-- イントロカード -->
+        <div id="intro-card" class="bg-white/80 backdrop-blur-md border border-emerald-100 rounded-3xl p-5 mb-6 shadow-sm">
+            <h2 class="text-lg font-bold text-emerald-800 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-seedling"></i>
+                中高生のみんなへ！
+            </h2>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                「今から、今週末、どこか自然がある場所に行きたい！」と思ったときに、スマホの現在地から近いおすすめのスポットやイベントを20箇所表示します。お小遣いや気分に合わせて直感的に探してみよう！
+            </p>
+        </div>
+
+        <!-- 検索用の操作エリア（お気に入り・予約リスト表示中は非表示にする制御が可能） -->
+        <div id="search-controls" class="space-y-6">
+            <!-- 位置情報・地域クイック選択 -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">📍 位置情報からさがす</h3>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <!-- GPS起動ボタン -->
+                    <button onclick="getCurrentLocation()" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-location-crosshairs text-base"></i>
+                        <span>現在地をGPSで取得する</span>
+                    </button>
+                    
+                    <!-- 鳥取県内エリアシミュレータ -->
+                    <div class="relative">
+                        <select id="location-simulator" onchange="simulateLocation(this.value)" class="w-full sm:w-48 bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-2xl py-3 px-3 appearance-none font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">🗺️ エリアをシミュレート</option>
+                            <option value="tottori-dune">鳥取市（鳥取砂丘周辺）</option>
+                            <option value="kurayoshi">倉吉市（白壁土蔵・大山東）</option>
+                            <option value="yonago">米子市（弓ヶ浜周辺）</option>
+                            <option value="daisen">大山町（大山寺周辺）</option>
+                            <option value="chizu">智頭町（森林セラピー周辺）</option>
+                            <option value="iwami">岩美町（浦富海岸周辺）</option>
+                            <option value="wakasa">若桜町（氷ノ山周辺）</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 現在地ステータス表示 -->
+                <div id="location-status" class="mt-3 text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 p-2.5 rounded-xl border border-dashed border-slate-200">
+                    <i class="fa-solid fa-circle-info text-emerald-500"></i>
+                    <span id="location-status-text">現在：デフォルト位置（鳥取県庁周辺）を設定しています。</span>
+                </div>
+            </div>
+
+            <!-- 絞り込みフィルター -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">⚡ 絞り込む</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 気分タグ -->
+                    <div>
+                        <span class="block text-xs font-semibold text-slate-600 mb-2">どんな気分？</span>
+                        <div class="flex flex-wrap gap-1.5" id="tag-container">
+                            <button onclick="toggleTagFilter('all')" id="tag-all" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">すべて</button>
+                            <button onclick="toggleTagFilter('のんびり')" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">😌 のんびり</button>
+                            <button onclick="toggleTagFilter('アクティブ')" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">🏃‍♂️ アクティブ</button>
+                            <button onclick="toggleTagFilter('エモい')" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">📸 エモい</button>
+                            <button onclick="toggleTagFilter('まなぶ')" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">📝 まなぶ</button>
+                            <button onclick="toggleTagFilter('スリル')" class="tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">🔥 スリル</button>
+                        </div>
+                    </div>
+
+                    <!-- 予算制限 -->
+                    <div>
+                        <span class="block text-xs font-semibold text-slate-600 mb-2">予算（お小遣い）</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="toggleBudgetFilter('all')" id="budget-all" class="budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">すべて</button>
+                            <button onclick="toggleBudgetFilter(0)" class="budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">👛 0円（無料）</button>
+                            <button onclick="toggleBudgetFilter(1000)" class="budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">💵 1,000円以内</button>
+                            <button onclick="toggleBudgetFilter(3000)" class="budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200">💳 3,000円以内</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 検索結果ヘッダー -->
+        <div class="flex items-center justify-between mb-4 mt-6 px-1">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-slate-700 font-title" id="results-count-title">近くの自然アクティビティ 20選</span>
+                <span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full" id="results-count-badge">20件</span>
+            </div>
+            <!-- モードリセット用の簡易案内 -->
+            <button onclick="switchMode('all')" id="back-to-all-btn" class="hidden text-xs text-emerald-600 hover:underline font-semibold">
+                <i class="fa-solid fa-rotate-left mr-1"></i>すべて表示に戻る
+            </button>
+            <span class="text-[11px] text-slate-500" id="distance-info">近い順に並んでいます</span>
+        </div>
+
+        <!-- アクティビティグリッド -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="activity-container">
+            <!-- JavaScriptからスポットカードが動的に挿入されます -->
+        </div>
+
+        <!-- 0件ヒット時のプレースホルダー -->
+        <div id="no-results" class="hidden bg-white rounded-3xl p-12 text-center border border-dashed border-slate-200">
+            <i class="fa-regular fa-face-frown text-5xl text-slate-300 mb-3"></i>
+            <h4 class="text-base font-bold text-slate-600 mb-1" id="no-results-title">見つかりませんでした</h4>
+            <p class="text-xs text-slate-400" id="no-results-desc">条件をすこしゆるくして、もういちど探してみてください！</p>
+        </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="max-w-4xl mx-auto px-4 mt-12 text-center text-xs text-slate-400 border-t border-slate-200/60 pt-6">
+        <p class="font-title">🌲 ココカラ自然 - 鳥取自然マップ 🌲</p>
+        <p class="mt-1">※このアプリのデータは安全な行政サイト等の公的情報を模したシミュレーションデータです。</p>
+    </footer>
+
+    <!-- 詳細モーダル (モーダル表示時に現れる) -->
+    <div id="detail-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in relative max-h-[90vh] flex flex-col">
+            
+            <!-- 写真（上部） -->
+            <div class="h-48 w-full relative bg-slate-100">
+                <img id="modal-img" src="" alt="詳細イメージ" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <!-- 閉じるボタン -->
+                <button onclick="closeModal()" class="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <!-- タイトル、カテゴリ -->
+                <div class="absolute bottom-3 left-4 right-4 text-white">
+                    <span id="modal-category" class="text-[10px] bg-emerald-500 px-2 py-0.5 rounded-full font-semibold uppercase">カテゴリ</span>
+                    <h3 id="modal-title" class="text-lg font-bold mt-1 leading-tight font-title">アクティビティ名称</h3>
+                </div>
+            </div>
+
+            <!-- スクロール可能な詳細エリア -->
+            <div class="p-6 overflow-y-auto space-y-4 text-sm flex-1">
+                <!-- 基本ステータス -->
+                <div class="grid grid-cols-2 gap-3 text-xs border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="fa-solid fa-coins text-amber-500 w-4"></i>
+                        <span>予算: <strong id="modal-price" class="text-slate-800">無料</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="fa-solid fa-users text-indigo-500 w-4"></i>
+                        <span>目安人数: <strong id="modal-capacity" class="text-slate-800">1人〜</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="fa-solid fa-map-pin text-rose-500 w-4"></i>
+                        <span>距離: <strong id="modal-distance" class="text-slate-800">-- km</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-slate-600">
+                        <i class="fa-solid fa-shield text-emerald-500 w-4"></i>
+                        <span>安心マーク: <strong class="text-emerald-600">行政推奨</strong></span>
+                    </div>
+                </div>
+
+                <!-- 説明文 -->
+                <div>
+                    <h4 class="font-bold text-slate-700 text-xs mb-1">スポット・イベントについて</h4>
+                    <p id="modal-description" class="text-xs text-slate-600 leading-relaxed">ここには詳しい説明文が入ります。</p>
+                </div>
+
+                <!-- ★予約設定セクション（新規追加：参加人数選択） -->
+                <div id="booking-setup-section" class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-4 space-y-3">
+                    <h4 class="font-bold text-emerald-800 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-question"></i>
+                        参加予約の設定
+                    </h4>
+                    
+                    <div class="flex flex-col gap-1">
+                        <label for="booking-people" class="text-xs text-slate-600 font-semibold">何人で行きますか？</label>
+                        <div class="relative mt-1">
+                            <select id="booking-people" class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl py-2.5 px-3 appearance-none font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="1人 (自分だけ)">👤 1人 (自分だけ)</option>
+                                <option value="2人 (友達と)">👥 2人 (友達と)</option>
+                                <option value="3人 (グループで)">👥 3人 (グループで)</option>
+                                <option value="4人以上 (部活・サークル等)">🏫 4人以上 (部活・みんなで)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 予約済みの表示エリア（予約済の場合に、現在の予約詳細を表示） -->
+                <div id="booked-status-section" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
+                    <h4 class="font-bold text-amber-800 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-calendar-check text-amber-600"></i>
+                        現在の予約内容
+                    </h4>
+                    <div class="text-xs space-y-1.5 text-slate-700">
+                        <p>🍀 <strong>ステータス:</strong> <span id="booked-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold">確認中</span></p>
+                        <p>👥 <strong>予約人数:</strong> <span id="booked-people-text" class="font-semibold">--</span></p>
+                        <p>📅 <strong>申込日時:</strong> <span id="booked-date-text">--</span></p>
+                    </div>
+                </div>
+
+                <!-- 保護者の承諾チェック -->
+                <div id="parental-consent-box" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 space-y-2 hidden">
+                    <div class="flex items-start gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                        <div>
+                            <span class="font-bold">このアクティビティは保護者の同意が必要です</span>
+                            <p class="text-[10px] text-amber-700/80 mt-0.5">予約を確定させるために、保護者の同意を必ずもらってください。</p>
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 bg-white/60 p-1.5 rounded border border-amber-300/60 cursor-pointer">
+                        <input type="checkbox" id="consent-check" class="rounded text-amber-600 focus:ring-amber-500">
+                        <span class="font-semibold">保護者の同意を得ています</span>
+                    </label>
+                </div>
+
+                <!-- アクセス -->
+                <div class="bg-slate-50 rounded-xl p-3 text-xs text-slate-600">
+                    <span class="font-semibold text-slate-700 block mb-1">📍 アクセス・所在地</span>
+                    <p id="modal-address">鳥取県某所</p>
+                </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
+                <button onclick="toggleModalFavorite()" id="modal-fav-btn" class="border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-4 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold transition-all">
+                    <i class="fa-solid fa-heart" id="modal-fav-icon"></i>
+                    <span>お気に入り</span>
+                </button>
+                <button id="modal-booking-btn" onclick="bookingAction()" class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs hover:shadow-md active:scale-95 transition-all text-center">
+                    参加を申し込む
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知用のコンテナ -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // --- データ設計 (行政サイト・信頼できる観光地情報に限定した鳥取県内＋近郊20のスポット) ---
+        const activities = [
+            {
+                id: 1,
+                title: "鳥取砂丘 サンセットウォーク",
+                category: "大自然ツアー",
+                lat: 35.5404,
+                lng: 134.2291,
+                tags: ["エモい", "のんびり"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜誰でも",
+                description: "夕暮れ時の鳥取砂丘は息をのむ美しさ。オレンジ色に染まる日本海と、風が織りなす「風紋」をただ眺めるだけで心が洗われます。友達とエモい写真を撮りたい時に一押しのスポットです。",
+                address: "鳥取県鳥取市福部町湯山",
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 2,
+                title: "大山（山頂）での星空観察体験",
+                category: "地域イベント",
+                lat: 35.3813,
+                lng: 133.5414,
+                tags: ["エモい", "まなぶ"],
+                price: 500,
+                priceText: "500円",
+                capacity: "1人〜15人",
+                description: "環境省の星空調査で「星が一番きれいに見える場所」に選ばれた鳥取県。大山の澄んだ空気の中で、天体望遠鏡を使って星座や天の川を観察します。中高生向け特別割引あり！",
+                address: "鳥取県西伯郡大山町大山",
+                img: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 3,
+                title: "浦富海岸 クリアカヤック体験",
+                category: "大自然ツアー",
+                lat: 35.5847,
+                lng: 134.3184,
+                tags: ["アクティブ", "スリル"],
+                price: 2500,
+                priceText: "2,500円 (学生割引)",
+                capacity: "2人〜10人",
+                description: "透明度25メートルの驚異的な美しさを誇る浦富海岸。底がスケルトンになったカヤックに乗って、海中を泳ぐ魚たちを真上から観察できます。夏の思い出作りにぴったり！",
+                address: "鳥取県岩美郡岩美町浦富",
+                img: "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 4,
+                title: "智頭芦津渓谷 森林セラピー＆散策",
+                category: "自然スポット",
+                lat: 35.2155,
+                lng: 134.2882,
+                tags: ["のんびり"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜グループ",
+                description: "智頭町の芦津渓谷は、リラックス効果が実証された「森林セラピーロード」に認定されています。木漏れ日と川のせせらぎ、木の香りに包まれて、勉強のストレスをリセットしませんか？",
+                address: "鳥取県八頭郡智頭町芦津",
+                img: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 5,
+                title: "氷ノ山 自然探検ハイク",
+                category: "大自然ツアー",
+                lat: 35.3524,
+                lng: 134.5126,
+                tags: ["アクティブ", "まなぶ"],
+                price: 1000,
+                priceText: "1,000円",
+                capacity: "1人〜10人",
+                description: "鳥取と兵庫の県境にそびえる氷ノ山。豊かなブナの原生林をインストラクターと一緒にトレッキングします。運が良ければ天然記念物のヤマネや貴重な動植物に出会えるチャンス！",
+                address: "鳥取県八頭郡若桜町つく米",
+                img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 6,
+                title: "湖山池 ナチュラルカヌー探検",
+                category: "大自然ツアー",
+                lat: 35.5122,
+                lng: 134.1611,
+                tags: ["アクティブ", "のんびり"],
+                price: 1500,
+                priceText: "1,500円 (中高生)",
+                capacity: "1人〜6人",
+                description: "日本最大の「池」である湖山池をゆったりとカヌーで進みます。波が穏やかなので初心者でもすぐに乗れるようになります。夕暮れ時は池が鏡のようになり幻想的です。",
+                address: "鳥取県鳥取市高住",
+                img: "https://images.unsplash.com/photo-1445308122394-ff3019f854b7?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 7,
+                title: "船上山 屏風岩トレッキング",
+                category: "自然スポット",
+                lat: 35.4082,
+                lng: 133.6192,
+                tags: ["アクティブ", "スリル"],
+                price: 0,
+                priceText: "無料",
+                capacity: "2人〜グループ推奨",
+                description: "まるで自然が作った壁のようにそびえ立つ「屏風岩」が名物の船上山。歴史の舞台でもあり、そそり立つ岩肌は圧巻の一言。ちょっとアドベンチャー気分を味わいたい時に最高です。",
+                address: "鳥取県東伯郡琴浦町山川",
+                img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 8,
+                title: "鍵掛峠 大山南壁の絶景スケッチ会",
+                category: "地域イベント",
+                lat: 35.3521,
+                lng: 133.5350,
+                tags: ["のんびり", "エモい"],
+                price: 200,
+                priceText: "200円 (画材代)",
+                capacity: "1人〜20人",
+                description: "大山を最も美しく見上げられるとされる鍵掛峠。初夏の緑、秋の紅葉など、季節ごとに移り変わる大山の絶景をのんびり静かにスケッチする、行政・美術クラブ主催の開放的な青空アートイベントです。",
+                address: "鳥取県日野郡江府町大字御机鍵掛",
+                img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 9,
+                title: "鳴り石の浜「波の音」リスニングスポット",
+                category: "自然スポット",
+                lat: 35.5126,
+                lng: 133.6625,
+                tags: ["のんびり", "エモい"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜誰でも",
+                description: "砂浜ではなく、丸い石が敷き詰められた不思議な海岸。波が寄せて返すたびに「カラコロ、キコロ」と美しい音が鳴り響きます。「よくなる」浜として縁起も良く、リラックス効果バツグンです。",
+                address: "鳥取県東伯郡琴浦町赤碕",
+                img: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 10,
+                title: "雨滝のマイナスイオンハイキング",
+                category: "自然スポット",
+                lat: 35.4851,
+                lng: 134.4182,
+                tags: ["のんびり"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜誰でも",
+                description: "日本の滝百選にも選ばれている、落差40mの「雨滝」。周囲は原生林に囲まれ、ひんやりとした涼しい風と水しぶきが、夏の暑さや日頃の疲れを吹き飛ばしてくれます。",
+                address: "鳥取県鳥取市国府町雨滝",
+                img: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 11,
+                title: "【島根】美保関のリアス式海岸クルーズ",
+                category: "大自然ツアー",
+                lat: 35.5684,
+                lng: 133.2422,
+                tags: ["アクティブ", "スリル"],
+                price: 1800,
+                priceText: "1,800円 (学生割引)",
+                capacity: "1人〜15人",
+                description: "鳥取県境からすぐ！島根半島東端 of 美保関。荒波が削り出した迫力の断崖絶壁を、地元船長の案内でボートから見上げます。ダイナミックな自然のパワーを体感したい中高生に！",
+                address: "島根県松江市美保関町",
+                img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 12,
+                title: "【兵庫】新温泉町 但馬御火浦シュノーケリング",
+                category: "地域イベント",
+                lat: 35.6322,
+                lng: 134.4285,
+                tags: ["アクティブ", "スリル"],
+                price: 2000,
+                priceText: "2,000円",
+                capacity: "2人〜8人",
+                description: "鳥取の東隣、兵庫県新温泉町のジオスポット。海の透明度がとても高く、海中洞窟の探検や、安全なシュノーケリングガイド講習が受けられます。日本海の神秘にダイブ！",
+                address: "兵庫県美方郡新温泉町",
+                img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 13,
+                title: "【岡山】ひるぜん高原 自転車ロードツーリング",
+                category: "自然スポット",
+                lat: 35.2952,
+                lng: 133.7712,
+                tags: ["アクティブ", "のんびり"],
+                price: 800,
+                priceText: "800円 (レンタサイクル代)",
+                capacity: "1人〜5人",
+                description: "鳥取（大山南）から県境を越えてすぐ。広大でなだらかなひるぜん高原を、風を切りながら自転車で走り抜けます。サイクリングロードが整備されているため安全です。",
+                address: "岡山県真庭市蒜山",
+                img: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 14,
+                title: "多鯰ヶ池 お釜池ミステリー周遊路",
+                category: "自然スポット",
+                lat: 35.5312,
+                lng: 134.2514,
+                tags: ["エモい", "まなぶ"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜誰でも",
+                description: "鳥取砂丘のすぐ隣にひっそりと佇む伝説の池。鬱蒼とした巨木と、深いエメラルドグリーンの水面が静かに輝く、まさにスタジオジブリの世界に入り込んだような隠れた名所です。",
+                address: "鳥取県鳥取市福部町",
+                img: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 15,
+                title: "鳥取市しゃんしゃん森のアウトドア体験会",
+                category: "地域イベント",
+                lat: 35.4721,
+                lng: 134.2052,
+                tags: ["まなぶ", "のんびり"],
+                price: 300,
+                priceText: "300円",
+                capacity: "1人〜15人",
+                description: "地元の森林ボランティア団体が教える、薪割りやかんたん火起こし、マシュマロ焼きが楽しめる自然体験会。中高生の週末のリフレッシュ活動として大人気です。",
+                address: "鳥取県鳥取市今町周辺（しゃんしゃん森）",
+                img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 16,
+                title: "天万渓谷のホタル鑑賞ウォーク",
+                category: "地域イベント",
+                lat: 35.3421,
+                lng: 133.4215,
+                tags: ["エモい", "のんびり"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜何人でも",
+                description: "初夏の夜、天万渓谷沿いを何千匹ものゲンジボタルが舞う幻想的な小径を歩くイベント。携帯の明かりを消して、やわらかな光の乱舞の中を進む贅沢な体験を味わえます。",
+                address: "鳥取県西伯郡南部町天万",
+                img: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 17,
+                title: "千代川 ヤマメつかみ取り＆塩焼き体験",
+                category: "地域イベント",
+                lat: 35.3052,
+                lng: 134.1812,
+                tags: ["アクティブ", "まなぶ"],
+                price: 800,
+                priceText: "800円 (魚1匹お土産付き)",
+                capacity: "1人〜12人",
+                description: "鳥取の清流・千代川の支流で、手づかみでヤマメを獲る体験。捕まえた魚は、その場で地元のおじいちゃんたちと一緒に炭火で香ばしく塩焼きにして食べられます！おいしさ満点です。",
+                address: "鳥取県八頭郡智頭町",
+                img: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 18,
+                title: "白兎海岸 うさぎ神話ハイキング",
+                category: "自然スポット",
+                lat: 35.5412,
+                lng: 134.1352,
+                tags: ["エモい", "まなぶ"],
+                price: 0,
+                priceText: "無料",
+                capacity: "1人〜誰でも",
+                description: "「因幡の白うさぎ」の神話の舞台となった、白い砂浜が美しい弓なりの海岸。道の駅や近くの白兎神社と合わせ、水平線を眺めながら歴史ロマンを感じる爽快な遊歩道ハイクが楽しめます。",
+                address: "鳥取県鳥取市白兎",
+                img: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=80",
+                needParent: false
+            },
+            {
+                id: 19,
+                title: "伯州山 ブナの原生林・スノーハイク",
+                category: "大自然ツアー",
+                lat: 35.2514,
+                lng: 133.9126,
+                tags: ["アクティブ", "スリル"],
+                price: 1500,
+                priceText: "1,500円 (かんじきレンタル込)",
+                capacity: "2人〜10人",
+                description: "冬から春限定！鳥取と岡山境の伯州山で、雪の上をスノーシュー（西洋かんじき）で踏みしめて歩くイベント。真っ白なパウダースノーと静寂に包まれた森を冒険します。",
+                address: "鳥取県東伯郡三朝町周辺",
+                img: "https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            },
+            {
+                id: 20,
+                title: "東郷池 周遊SUPヨガ体験",
+                category: "大自然ツアー",
+                lat: 35.4852,
+                lng: 133.8912,
+                tags: ["アクティブ", "のんびり"],
+                price: 2500,
+                priceText: "2,500円 (中高生応援価格)",
+                capacity: "2人〜6人",
+                description: "温泉が湧き出るハワイ（羽合）のような東郷池。安定感抜群 of SUP（サップ）ボードに乗って、水の上でヨガのポーズをします。グラグラするスリルと、水面の心地よさを全身で味わえます。",
+                address: "鳥取県東伯郡湯梨浜町",
+                img: "https://images.unsplash.com/photo-1517059224940-d4af9eec41b7?auto=format&fit=crop&w=600&q=80",
+                needParent: true
+            }
+        ];
+
+        // --- 位置情報・お気に入り・予約情報の保持 ---
+        let currentLat = 35.5036;
+        let currentLng = 134.2206;
+        let userFavorites = JSON.parse(localStorage.getItem('cocokara_nature_favs') || '[]');
+        // 各予約オブジェクトは { activityId: id, people: text, needParent: bool, hasConsent: bool, date: string }
+        let userBookings = JSON.parse(localStorage.getItem('cocokara_nature_bookings') || '[]');
+
+        // アプリの状態
+        let currentMode = 'all'; // 'all' (さがす), 'favorites' (お気に入りのみ), 'bookings' (予約済みのみ)
+        let currentTagFilter = 'all';
+        let currentBudgetFilter = 'all';
+
+        // --- 距離計算 (ハバース公式を用いて算出) ---
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // 地球の半径 (km)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // 距離 (km)
+        }
+
+        // --- 表示モードの切り替え ---
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // ナビボタンのハイライト切替
+            const favBtn = document.getElementById('fav-filter-btn');
+            const bookBtn = document.getElementById('booking-filter-btn');
+            const searchControls = document.getElementById('search-controls');
+            const introCard = document.getElementById('intro-card');
+            const backBtn = document.getElementById('back-to-all-btn');
+            const titleElement = document.getElementById('results-count-title');
+
+            // いったんすべてのハイライトを解除
+            favBtn.className = "flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all";
+            bookBtn.className = "flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all";
+            searchControls.classList.remove('hidden');
+            introCard.classList.remove('hidden');
+            backBtn.classList.add('hidden');
+
+            if (mode === 'all') {
+                titleElement.innerText = "近くの自然アクティビティ 20選";
+            } else if (mode === 'favorites') {
+                favBtn.className = "flex items-center space-x-1 bg-pink-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md";
+                searchControls.classList.add('hidden'); // お気に入りは検索パネルを閉じる
+                introCard.classList.add('hidden');
+                backBtn.classList.remove('hidden');
+                titleElement.innerText = "❤️ お気に入りしたスポット";
+            } else if (mode === 'bookings') {
+                bookBtn.className = "flex items-center space-x-1 bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md";
+                searchControls.classList.add('hidden'); // 予約リストは検索パネルを閉じる
+                introCard.classList.add('hidden');
+                backBtn.classList.remove('hidden');
+                titleElement.innerText = "📅 マイ予約・行く予定リスト";
+            }
+
+            renderActivities();
+        }
+
+        // --- 画面レンダリング ---
+        function renderActivities() {
+            const container = document.getElementById('activity-container');
+            const noResults = document.getElementById('no-results');
+            const noResultsTitle = document.getElementById('no-results-title');
+            const noResultsDesc = document.getElementById('no-results-desc');
+            container.innerHTML = '';
+
+            // 各データの現在地からの距離を計算
+            let computedList = activities.map(item => {
+                const distance = calculateDistance(currentLat, currentLng, item.lat, item.lng);
+                return { ...item, distance: distance };
+            });
+
+            // 距離順にソート
+            computedList.sort((a, b) => a.distance - b.distance);
+
+            // フィルター・表示モード適用
+            let filteredList = computedList.filter(item => {
+                // 表示モードが「お気に入り」の場合
+                if (currentMode === 'favorites' && !userFavorites.includes(item.id)) {
+                    return false;
+                }
+                // 表示モードが「マイ予約」の場合
+                if (currentMode === 'bookings' && !userBookings.some(b => b.activityId === item.id)) {
+                    return false;
+                }
+
+                // タグ・予算フィルター (「さがす」モード中のみ適用)
+                if (currentMode === 'all') {
+                    if (currentTagFilter !== 'all' && !item.tags.includes(currentTagFilter)) {
+                        return false;
+                    }
+                    if (currentBudgetFilter !== 'all') {
+                        if (currentBudgetFilter === 0 && item.price !== 0) return false;
+                        if (currentBudgetFilter === 1000 && item.price > 1000) return false;
+                        if (currentBudgetFilter === 3000 && item.price > 3000) return false;
+                    }
+                }
+                return true;
+            });
+
+            // バッジカウンター類の最新化
+            document.getElementById('results-count-badge').innerText = `${filteredList.length}件`;
+            document.getElementById('fav-count').innerText = userFavorites.length;
+            document.getElementById('booking-count').innerText = userBookings.length;
+
+            if (filteredList.length === 0) {
+                noResults.classList.remove('hidden');
+                if (currentMode === 'favorites') {
+                    noResultsTitle.innerText = "お気に入りはまだありません";
+                    noResultsDesc.innerText = "気になるアクティビティのハートマークを押して登録してみよう！";
+                } else if (currentMode === 'bookings') {
+                    noResultsTitle.innerText = "予約したアクティビティはありません";
+                    noResultsDesc.innerText = "詳細画面から「参加を申し込む」ボタンを押して登録してみよう！";
+                } else {
+                    noResultsTitle.innerText = "見つかりませんでした";
+                    noResultsDesc.innerText = "条件をすこしゆるくして、もういちど探してみてください！";
+                }
+                return;
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            // カードの生成
+            filteredList.forEach(item => {
+                const isFav = userFavorites.includes(item.id);
+                const favColorClass = isFav ? 'text-pink-500' : 'text-slate-300 hover:text-pink-400';
+                
+                // 予約状態のバッジ
+                const booking = userBookings.find(b => b.activityId === item.id);
+                let bookingBadge = '';
+                if (booking) {
+                    if (booking.needParent && !booking.hasConsent) {
+                        bookingBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">⏳ 同意待ち</span>`;
+                    } else {
+                        bookingBadge = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">✅ 予約確定 (${booking.people})</span>`;
+                    }
+                }
+
+                // タグのバッジ
+                const tagsHtml = item.tags.map(tag => 
+                    `<span class="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">#${tag}</span>`
+                ).join(' ');
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 card-transition flex flex-col cursor-pointer";
+                card.setAttribute('onclick', `openModal(${item.id})`);
+
+                card.innerHTML = `
+                    <!-- 画像 -->
+                    <div class="h-44 w-full relative bg-slate-50 overflow-hidden">
+                        <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80'">
+                        <div class="absolute top-2.5 left-2.5 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wide">
+                            ${item.category}
+                        </div>
+                        <div class="absolute top-2.5 right-12">
+                            ${bookingBadge}
+                        </div>
+                        <!-- お気に入りボタン -->
+                        <button onclick="event.stopPropagation(); toggleFavorite(${item.id})" class="absolute top-2.5 right-2.5 bg-white/90 active:scale-90 hover:bg-white text-base rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-all">
+                            <i class="fa-solid fa-heart ${favColorClass}"></i>
+                        </button>
+                    </div>
+
+                    <!-- コンテンツ -->
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1 text-[11px] text-slate-400 font-semibold mb-1">
+                                <i class="fa-solid fa-map-pin text-rose-400"></i>
+                                <span>近い！ 約 ${item.distance.toFixed(1)} km</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm leading-snug line-clamp-2 hover:text-emerald-700 transition-colors font-title mb-2">
+                                ${item.title}
+                            </h4>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between text-xs mb-2 border-t border-slate-50 pt-2">
+                                <span class="text-slate-500 flex items-center gap-1">
+                                    <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i>
+                                    お小遣い: <strong class="text-slate-700">${item.priceText}</strong>
+                                </span>
+                                ${item.needParent ? `<span class="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">保護者承諾要</span>` : ''}
+                            </div>
+                            
+                            <!-- タグ -->
+                            <div class="flex flex-wrap gap-1">
+                                ${tagsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- GPSでの現在地取得 ---
+        function getCurrentLocation() {
+            const statusText = document.getElementById('location-status-text');
+            if (!navigator.geolocation) {
+                showToast("❌ GPS機能がブラウザでサポートされていません。", "error");
+                return;
+            }
+
+            statusText.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-emerald-500"></i> 位置情報を取得中...`;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                    
+                    statusText.innerHTML = `🛰️ <b>現在地を取得しました！</b> (緯度: ${currentLat.toFixed(4)}, 経度: ${currentLng.toFixed(4)}) から近い順に表示しています。`;
+                    document.getElementById('location-simulator').value = "";
+                    renderActivities();
+                    showToast("📍 現在地からの近い順に並び替えました！", "success");
+                },
+                (error) => {
+                    statusText.innerHTML = `⚠️ <b>位置情報の取得に失敗しました。</b> 鳥取県庁付近として計算中。`;
+                    showToast("位置情報が取得できませんでした。", "warning");
+                    renderActivities();
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            );
+        }
+
+        // --- エリアシミュレーション ---
+        function simulateLocation(areaKey) {
+            const statusText = document.getElementById('location-status-text');
+            if (!areaKey) {
+                currentLat = 35.5036;
+                currentLng = 134.2206;
+                statusText.innerText = "現在：デフォルト位置（鳥取県庁周辺）を設定しています。";
+                renderActivities();
+                return;
+            }
+
+            const areas = {
+                "tottori-dune": { name: "鳥取市（鳥取砂丘周辺）", lat: 35.5404, lng: 134.2291 },
+                "kurayoshi": { name: "倉吉市（白壁土蔵・大山東）", lat: 35.4322, lng: 133.8242 },
+                "yonago": { name: "米子市（弓ヶ浜周辺）", lat: 35.4281, lng: 133.3312 },
+                "daisen": { name: "大山町（大山寺周辺）", lat: 35.3813, lng: 133.5414 },
+                "chizu": { name: "智頭町（森林セラピー周辺）", lat: 35.2632, lng: 134.2292 },
+                "iwami": { name: "岩美町（浦富海岸周辺）", lat: 35.5847, lng: 134.3184 },
+                "wakasa": { name: "若桜町（氷ノ山周辺）", lat: 35.3333, lng: 134.4000 }
+            };
+
+            const selected = areas[areaKey];
+            currentLat = selected.lat;
+            currentLng = selected.lng;
+            statusText.innerHTML = `🗺️ <b>${selected.name}</b> にいると仮定して、近い順に並び替えました！`;
+            
+            renderActivities();
+            showToast(`📍 ${selected.name}からの近さに切り替えました！`, "success");
+        }
+
+        // --- お気に入り機能 ---
+        function toggleFavorite(id) {
+            const index = userFavorites.indexOf(id);
+            if (index > -1) {
+                userFavorites.splice(index, 1);
+                showToast("💔 お気に入りから削除しました", "info");
+            } else {
+                userFavorites.push(id);
+                showToast("❤️ お気に入りに追加しました！", "success");
+            }
+            localStorage.setItem('cocokara_nature_favs', JSON.stringify(userFavorites));
+            renderActivities();
+        }
+
+        // --- フィルター機能 ---
+        function toggleTagFilter(tag) {
+            currentTagFilter = tag;
+            const buttons = document.querySelectorAll('#tag-container .tag-btn');
+            buttons.forEach(btn => {
+                btn.className = "tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200";
+            });
+            document.getElementById('tag-all').className = "tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200";
+
+            if (tag === 'all') {
+                document.getElementById('tag-all').className = "tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200";
+            } else {
+                event.target.className = "tag-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200";
+            }
+            renderActivities();
+        }
+
+        function toggleBudgetFilter(limit) {
+            currentBudgetFilter = limit;
+            const buttons = document.querySelectorAll('.budget-btn');
+            buttons.forEach(btn => {
+                btn.className = "budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200";
+            });
+            document.getElementById('budget-all').className = "budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200";
+
+            if (limit === 'all') {
+                document.getElementById('budget-all').className = "budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200";
+            } else {
+                event.target.className = "budget-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200";
+            }
+            renderActivities();
+        }
+
+        // --- 詳細モーダルの制御 ---
+        let activeModalId = null;
+
+        function openModal(id) {
+            const item = activities.find(a => a.id === id);
+            if (!item) return;
+
+            activeModalId = id;
+            const distance = calculateDistance(currentLat, currentLng, item.lat, item.lng);
+
+            document.getElementById('modal-img').src = item.img;
+            document.getElementById('modal-img').onerror = function() {
+                this.src = "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80";
+            };
+            document.getElementById('modal-title').innerText = item.title;
+            document.getElementById('modal-category').innerText = item.category;
+            document.getElementById('modal-price').innerText = item.priceText;
+            document.getElementById('modal-capacity').innerText = item.capacity;
+            document.getElementById('modal-distance').innerText = `約 ${distance.toFixed(1)} km`;
+            document.getElementById('modal-description').innerText = item.description;
+            document.getElementById('modal-address').innerText = item.address;
+
+            // 予約状況のチェック
+            const booking = userBookings.find(b => b.activityId === id);
+            const bookingSetup = document.getElementById('booking-setup-section');
+            const bookedStatus = document.getElementById('booked-status-section');
+            const bookingBtn = document.getElementById('modal-booking-btn');
+            const consentBox = document.getElementById('parental-consent-box');
+            const consentCheck = document.getElementById('consent-check');
+
+            consentCheck.checked = false;
+
+            if (booking) {
+                // 既に予約されている場合
+                bookingSetup.classList.add('hidden');
+                bookedStatus.classList.remove('hidden');
+                consentBox.classList.add('hidden'); // すでに予約されている時はチェックボックスを隠す
+
+                // 予約情報の表示設定
+                const statusBadge = document.getElementById('booked-status-badge');
+                if (booking.needParent && !booking.hasConsent) {
+                    statusBadge.innerText = "⏳ 保護者の確認待ち";
+                    statusBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800";
+                } else {
+                    statusBadge.innerText = "✅ 予約確定";
+                    statusBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800";
+                }
+
+                document.getElementById('booked-people-text').innerText = booking.people;
+                document.getElementById('booked-date-text').innerText = booking.date;
+
+                // ボタンの表示切り替え（キャンセルできるようにする）
+                bookingBtn.innerText = "予約をキャンセルする";
+                bookingBtn.className = "flex-1 bg-rose-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs hover:shadow-md active:scale-95 transition-all text-center";
+            } else {
+                // まだ予約されていない場合
+                bookingSetup.classList.remove('hidden');
+                bookedStatus.classList.add('hidden');
+
+                if (item.needParent) {
+                    consentBox.classList.remove('hidden');
+                } else {
+                    consentBox.classList.add('hidden');
+                }
+
+                // ボタンの表示切り替え（通常予約）
+                bookingBtn.innerText = "参加を申し込む";
+                bookingBtn.className = "flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs hover:shadow-md active:scale-95 transition-all text-center";
+            }
+
+            // お気に入りボタンの状態同期
+            updateModalFavBtnState(id);
+
+            // モーダル表示
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+            activeModalId = null;
+        }
+
+        // お気に入りボタン状態
+        function updateModalFavBtnState(id) {
+            const isFav = userFavorites.includes(id);
+            const favIcon = document.getElementById('modal-fav-icon');
+            const favBtn = document.getElementById('modal-fav-btn');
+
+            if (isFav) {
+                favIcon.className = "fa-solid fa-heart text-pink-500";
+                favBtn.classList.add('border-pink-200', 'bg-pink-50');
+            } else {
+                favIcon.className = "fa-solid fa-heart text-slate-300";
+                favBtn.classList.remove('border-pink-200', 'bg-pink-50');
+            }
+        }
+
+        function toggleModalFavorite() {
+            if (activeModalId === null) return;
+            toggleFavorite(activeModalId);
+            updateModalFavBtnState(activeModalId);
+        }
+
+        // --- 参加申し込み / キャンセル アクション ---
+        function bookingAction() {
+            if (activeModalId === null) return;
+            const item = activities.find(a => a.id === activeModalId);
+            const bookingIndex = userBookings.findIndex(b => b.activityId === activeModalId);
+
+            if (bookingIndex > -1) {
+                // キャンセル処理
+                const confirmCancel = confirm(`「${item.title}」の予約予約をキャンセルしますか？`);
+                if (confirmCancel) {
+                    userBookings.splice(bookingIndex, 1);
+                    localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
+                    closeModal();
+                    renderActivities();
+                    showToast("🗑️ 予約をキャンセルしました", "info");
+                }
+                return;
+            }
+
+            // 新規予約処理
+            const peopleSelect = document.getElementById('booking-people');
+            const selectedPeople = peopleSelect.value;
+            const hasConsent = document.getElementById('consent-check').checked;
+
+            // 保護者同意チェック確認
+            if (item.needParent && !hasConsent) {
+                showToast("⚠️ 保護者の同意チェックを入れてください。", "warning");
+                return;
+            }
+
+            // 現在日付の取得
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // 新しい予約データを追加
+            const newBooking = {
+                activityId: item.id,
+                people: selectedPeople,
+                needParent: item.needParent,
+                hasConsent: hasConsent,
+                date: dateStr
+            };
+
+            userBookings.push(newBooking);
+            localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
+
+            closeModal();
+            renderActivities();
+            
+            // 完了演出の表示
+            showSuccessNotification(item, newBooking);
+        }
+
+        // --- 予約完了おめでとう画面 ---
+        function showSuccessNotification(item, booking) {
+            const confirmDiv = document.createElement('div');
+            confirmDiv.className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in";
+            confirmDiv.id = "booking-success-modal";
+            
+            let statusSection = `
+                <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-2xl border border-blue-200 text-left space-y-1">
+                    <p><strong>🎉 予約が完了しました！</strong></p>
+                    <p class="text-[10px] text-blue-700/80">行く日までに移動手段（バス・電車の時刻表など）をチェックしておこう！</p>
+                </div>
+            `;
+
+            if (item.needParent) {
+                statusSection = `
+                    <div class="bg-amber-50 text-amber-800 text-xs p-3 rounded-2xl border border-amber-200 text-left space-y-1">
+                        <p><strong>⏳ 保護者同意の確認まち</strong></p>
+                        <p class="text-[10px] text-amber-700/80">登録した保護者に同意確認の案内を送りました。保護者の確認が取れ次第、予約が確定します！</p>
+                    </div>
+                `;
+            }
+
+            confirmDiv.innerHTML = `
+                <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">
+                        <i class="fa-solid fa-circle-check animate-bounce"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg font-title">申し込みを受け付けました！</h3>
+                        <p class="text-xs text-slate-500 mt-1">「マイ予約」からいつでも確認できます。</p>
+                    </div>
+                    
+                    ${statusSection}
+
+                    <div class="bg-slate-50 p-3 rounded-2xl text-left text-xs text-slate-600 space-y-1">
+                        <p>🔹 <strong>アクティビティ:</strong> ${item.title}</p>
+                        <p>🔹 <strong>行く人数:</strong> ${booking.people}</p>
+                        <p>🔹 <strong>場所:</strong> ${item.address}</p>
+                        <p>🔹 <strong>予算目安:</strong> ${item.priceText}</p>
+                    </div>
+
+                    <button onclick="document.getElementById('booking-success-modal').remove()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+                        確認した！
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(confirmDiv);
+        }
+
+        // --- トースト通知システム ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-semibold text-white shadow-lg transition-all transform translate-y-2 opacity-0 duration-300";
+            
+            let icon = '<i class="fa-solid fa-info"></i>';
+            if (type === 'success') {
+                toast.classList.add('bg-emerald-600');
+                icon = '<i class="fa-solid fa-circle-check"></i>';
+            } else if (type === 'warning') {
+                toast.classList.add('bg-amber-500');
+                icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (type === 'error') {
+                toast.classList.add('bg-rose-500');
+                icon = '<i class="fa-solid fa-circle-xmark"></i>';
+            } else {
+                toast.classList.add('bg-slate-700');
+                icon = '<i class="fa-solid fa-heart text-pink-400"></i>';
+            }
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- 起動処理 ---
+        window.onload = function() {
+            renderActivities();
+        };
+    </script>
+</body>
+</html>
