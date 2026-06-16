@@ -81,6 +81,32 @@
 
         <!-- 検索用の操作エリア（お気に入り・予約リスト表示中は非表示にする制御が可能） -->
         <div id="search-controls" class="space-y-6">
+            
+            <!-- キーワード検索バー -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🔍 キーワードでさがす</h3>
+                <div class="relative">
+                    <input type="text" id="search-input" oninput="handleSearchInput(this.value)" placeholder="例：海、山、川、砂丘、無料、星空..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-2xl py-3.5 pl-11 pr-10 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all font-medium">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <!-- 検索文字がある時だけ出るクリアボタン -->
+                    <button onclick="clearSearchInput()" id="search-clear-btn" class="hidden absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 active:scale-90 transition-all">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <!-- 検索サジェストワード -->
+                <div class="flex flex-wrap gap-1.5 mt-2.5 items-center">
+                    <span class="text-[10px] text-slate-400 font-semibold">おすすめの言葉：</span>
+                    <button onclick="quickSearch('海')" class="text-[10px] bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full hover:bg-sky-100 transition-all">🌊 海</button>
+                    <button onclick="quickSearch('山')" class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full hover:bg-emerald-100 transition-all">⛰️ 山</button>
+                    <button onclick="quickSearch('川')" class="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full hover:bg-blue-100 transition-all">💧 川</button>
+                    <button onclick="quickSearch('空')" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-all">✨ 空</button>
+                    <button onclick="quickSearch('雪')" class="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full hover:bg-slate-200 transition-all">❄️ 雪</button>
+                    <button onclick="quickSearch('無料')" class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full hover:bg-amber-100 transition-all">👛 無料</button>
+                </div>
+            </div>
+
             <!-- 位置情報・地域クイック選択 -->
             <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">📍 位置情報からさがす</h3>
@@ -229,7 +255,7 @@
                     <p id="modal-description" class="text-xs text-slate-600 leading-relaxed">ここには詳しい説明文が入ります。</p>
                 </div>
 
-                <!-- ★予約設定セクション（新規追加：参加人数選択） -->
+                <!-- 予約設定セクション（参加人数選択） -->
                 <div id="booking-setup-section" class="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-4 space-y-3">
                     <h4 class="font-bold text-emerald-800 text-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-circle-question"></i>
@@ -253,15 +279,44 @@
                 </div>
 
                 <!-- 予約済みの表示エリア（予約済の場合に、現在の予約詳細を表示） -->
-                <div id="booked-status-section" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
+                <div id="booked-status-section" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
                     <h4 class="font-bold text-amber-800 text-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-calendar-check text-amber-600"></i>
                         現在の予約内容
                     </h4>
-                    <div class="text-xs space-y-1.5 text-slate-700">
-                        <p>🍀 <strong>ステータス:</strong> <span id="booked-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold">確認中</span></p>
-                        <p>👥 <strong>予約人数:</strong> <span id="booked-people-text" class="font-semibold">--</span></p>
-                        <p>📅 <strong>申込日時:</strong> <span id="booked-date-text">--</span></p>
+                    <div class="text-xs space-y-2 text-slate-700">
+                        <p class="flex items-center gap-1.5">
+                            🍀 <strong>ステータス:</strong> 
+                            <span id="booked-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold">確認中</span>
+                        </p>
+                        
+                        <!-- ★予約人数の変更ドロップダウン -->
+                        <div class="flex flex-col gap-1 py-1">
+                            <label class="text-xs font-semibold text-slate-600 flex items-center gap-1">
+                                👥 <strong>行く人数の変更:</strong>
+                            </label>
+                            <div class="relative mt-0.5">
+                                <select id="booked-people-select" onchange="updateBookingPeople(this.value)" class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl py-2 px-3 appearance-none font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="1人 (自分だけ)">👤 1人 (自分だけ)</option>
+                                    <option value="2人 (友達と)">👥 2人 (友達と)</option>
+                                    <option value="3人 (グループで)">👥 3人 (グループで)</option>
+                                    <option value="4人以上 (部活・サークル等)">🏫 4人以上 (部活・みんなで)</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="pt-1">📅 <strong>申込日時:</strong> <span id="booked-date-text">--</span></p>
+                    </div>
+
+                    <!-- デモ用保護者承認機能 -->
+                    <div id="demo-approve-container" class="hidden border-t border-amber-200/60 pt-3 mt-2">
+                        <p class="text-[10px] text-amber-700 font-semibold mb-1.5"><i class="fa-solid fa-unlock-keyhole mr-1"></i>中高生向け開発デモ機能</p>
+                        <button onclick="demoApproveAction()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition-all shadow-sm">
+                            👨‍👩‍👦 保護者として予約を承認する
+                        </button>
                     </div>
                 </div>
 
@@ -300,11 +355,32 @@
         </div>
     </div>
 
+    <!-- カスタム確認ダイアログ (標準のconfirmの代替) -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl space-y-4 animate-fade-in">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 text-base" id="confirm-title">予約をキャンセルしますか？</h3>
+                <p class="text-xs text-slate-400 mt-1" id="confirm-desc">この予約を削除します。よろしいですか？</p>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button id="confirm-cancel-btn" class="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold py-2 px-4 rounded-xl text-xs transition-all">
+                    いいえ、戻る
+                </button>
+                <button id="confirm-ok-btn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all">
+                    はい、キャンセルする
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- トースト通知用のコンテナ -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
     <script>
-        // --- データ設計 (行政サイト・信頼できる観光地情報に限定した鳥取県内＋近郊20のスポット) ---
+        // --- データ設計 ---
         const activities = [
             {
                 id: 1,
@@ -331,7 +407,7 @@
                 price: 500,
                 priceText: "500円",
                 capacity: "1人〜15人",
-                description: "環境省の星空調査で「星が一番きれいに見える場所」に選ばれた鳥取県。大山の澄んだ空気の中で、天体望遠鏡を使って星座や天の川を観察します。中高生向け特別割引あり！",
+                description: "環境省 of 星空調査で「星が一番きれいに見える場所」に選ばれた鳥取県。大山の澄んだ空気の中で、天体望遠鏡を使って星座や天の川を観察します。中高生向け特別割引あり！",
                 address: "鳥取県西伯郡大山町大山",
                 img: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=600&q=80",
                 needParent: true
@@ -391,7 +467,7 @@
                 price: 1500,
                 priceText: "1,500円 (中高生)",
                 capacity: "1人〜6人",
-                description: "日本最大の「池」である湖山池をゆったりとカヌーで進みます。波が穏やかなので初心者でもすぐに乗れるようになります。夕暮れ時は池が鏡のようになり幻想的です。",
+                description: "日本最大の「池」である湖山池をゆったりとカヌーで進みます。波が穏やかなので初心者でもすぐに乗れるようになります。夕暮れ時は池が鏡のようになり幻想等です。",
                 address: "鳥取県鳥取市高住",
                 img: "https://images.unsplash.com/photo-1445308122394-ff3019f854b7?auto=format&fit=crop&w=600&q=80",
                 needParent: true
@@ -577,21 +653,6 @@
                 needParent: false
             },
             {
-                id: 19,
-                title: "伯州山 ブナの原生林・スノーハイク",
-                category: "大自然ツアー",
-                lat: 35.2514,
-                lng: 133.9126,
-                tags: ["アクティブ", "スリル"],
-                price: 1500,
-                priceText: "1,500円 (かんじきレンタル込)",
-                capacity: "2人〜10人",
-                description: "冬から春限定！鳥取と岡山境の伯州山で、雪の上をスノーシュー（西洋かんじき）で踏みしめて歩くイベント。真っ白なパウダースノーと静寂に包まれた森を冒険します。",
-                address: "鳥取県東伯郡三朝町周辺",
-                img: "https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=600&q=80",
-                needParent: true
-            },
-            {
                 id: 20,
                 title: "東郷池 周遊SUPヨガ体験",
                 category: "大自然ツアー",
@@ -605,31 +666,87 @@
                 address: "鳥取県東伯郡湯梨浜町",
                 img: "https://images.unsplash.com/photo-1517059224940-d4af9eec41b7?auto=format&fit=crop&w=600&q=80",
                 needParent: true
+            },
+            {
+                id: 19,
+                title: "伯州山 ブナの原生林・スノーハイク",
+                category: "大自然ツアー",
+                lat: 35.2514,
+                lng: 133.9126,
+                tags: ["アクティブ", "スリル"],
+                price: 1500,
+                priceText: "1,500円 (かんじきレンタル込)",
+                capacity: "2人〜10人",
+                description: "冬から春限定！鳥取と岡山境の伯州山で、雪の上をスノーシュー（西洋かんじき）で踏みしめて歩くイベント。真っ白なパウダースノーと静寂に包まれた森を冒険します。",
+                address: "鳥取県東伯郡三朝町周辺",
+                img: "https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=600&q=80",
+                needParent: true
             }
         ];
+
+        // --- STREAMING_CHUNK: Setting up synonym maps and scoring system... -->
+        // --- おすすめ関連検索用：シノニム（類義語・関連語）マップ定義 ---
+        const synonymMap = {
+            "海": ["海", "海岸", "砂丘", "カヤック", "ビーチ", "日本海", "サップ", "sup", "シュノーケリング", "浜", "波", "浦富", "白兎", "美保関", "海中", "魚"],
+            "山": ["山", "大山", "氷ノ山", "ハイク", "トレッキング", "ブナ", "登山", "渓谷", "滝", "森", "伯州山", "船上山", "鍵掛峠", "原生林", "木漏れ日"],
+            "川": ["川", "千代川", "渓谷", "滝", "ヤマメ", "清流", "せせらぎ", "雨滝", "川沿い", "つかみ取り", "水しぶき"],
+            "空": ["空", "星空", "天の川", "星座", "天体", "夜", "夕暮れ", "夕陽", "サンセット", "ホタル", "望遠鏡"],
+            "雪": ["雪", "冬", "スノー", "かんじき", "スノーシュー", "パウダースノー", "氷ノ山", "伯州山"],
+            "無料": ["無料", "0円", "ただ", "タダ", "リスニング", "スケッチ", "散策", "ハイク", "滝"]
+        };
 
         // --- 位置情報・お気に入り・予約情報の保持 ---
         let currentLat = 35.5036;
         let currentLng = 134.2206;
         let userFavorites = JSON.parse(localStorage.getItem('cocokara_nature_favs') || '[]');
-        // 各予約オブジェクトは { activityId: id, people: text, needParent: bool, hasConsent: bool, date: string }
         let userBookings = JSON.parse(localStorage.getItem('cocokara_nature_bookings') || '[]');
 
         // アプリの状態
-        let currentMode = 'all'; // 'all' (さがす), 'favorites' (お気に入りのみ), 'bookings' (予約済みのみ)
+        let currentMode = 'all'; 
         let currentTagFilter = 'all';
         let currentBudgetFilter = 'all';
+        let searchQuery = ''; 
 
+        // --- STREAMING_CHUNK: Implementing distance calculation logic... -->
         // --- 距離計算 (ハバース公式を用いて算出) ---
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // 地球の半径 (km)
+            const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = 
                 Math.sin(dLat/2) * Math.sin(dLat/2) +
                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; // 距離 (km)
+            return R * c; 
+        }
+
+        // --- STREAMING_CHUNK: Handling search inputs and quick search tags... -->
+        // --- キーワード検索インプットのハンドリング ---
+        function handleSearchInput(value) {
+            searchQuery = value.trim().toLowerCase();
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderActivities();
+        }
+
+        // --- 検索インプットのクリア処理 ---
+        function clearSearchInput() {
+            const inputElement = document.getElementById('search-input');
+            inputElement.value = '';
+            searchQuery = '';
+            document.getElementById('search-clear-btn').classList.add('hidden');
+            renderActivities();
+        }
+
+        // --- おすすめクイック検索クリック時の処理 ---
+        function quickSearch(word) {
+            const inputElement = document.getElementById('search-input');
+            inputElement.value = word;
+            handleSearchInput(word);
         }
 
         // --- 表示モードの切り替え ---
@@ -644,7 +761,6 @@
             const backBtn = document.getElementById('back-to-all-btn');
             const titleElement = document.getElementById('results-count-title');
 
-            // いったんすべてのハイライトを解除
             favBtn.className = "flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all";
             bookBtn.className = "flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all";
             searchControls.classList.remove('hidden');
@@ -655,21 +771,73 @@
                 titleElement.innerText = "近くの自然アクティビティ 20選";
             } else if (mode === 'favorites') {
                 favBtn.className = "flex items-center space-x-1 bg-pink-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md";
-                searchControls.classList.add('hidden'); // お気に入りは検索パネルを閉じる
+                searchControls.classList.add('hidden'); 
                 introCard.classList.add('hidden');
                 backBtn.classList.remove('hidden');
                 titleElement.innerText = "❤️ お気に入りしたスポット";
             } else if (mode === 'bookings') {
                 bookBtn.className = "flex items-center space-x-1 bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-md";
-                searchControls.classList.add('hidden'); // 予約リストは検索パネルを閉じる
+                searchControls.classList.add('hidden'); 
                 introCard.classList.add('hidden');
                 backBtn.classList.remove('hidden');
                 titleElement.innerText = "📅 マイ予約・行く予定リスト";
             }
 
+            clearSearchInput();
             renderActivities();
         }
 
+        // --- STREAMING_CHUNK: Formulating relevance scores and matching terms... -->
+        // --- キーワードに対するおすすめ度（関連度スコア）を算出する関数 ---
+        function calculateRelevanceScore(item, query) {
+            if (!query) return { score: 0, matchedCategory: null };
+
+            let score = 0;
+            let matchedCategory = null;
+
+            // クエリ拡張（シノニムマップのチェック）
+            let targetWords = [query];
+            
+            // シノニム辞書をループして、キーワードに関連するものがあれば拡張ワードリストに加える
+            for (const [key, synonyms] of Object.entries(synonymMap)) {
+                if (query.includes(key) || key.includes(query)) {
+                    targetWords = [...new Set([...targetWords, ...synonyms])];
+                    matchedCategory = key; // 「海」「山」などの大カテゴリを記録
+                }
+            }
+
+            // 各関連語でスコアリング
+            targetWords.forEach(word => {
+                const w = word.toLowerCase();
+                
+                // タイトルに部分一致：一番強いおすすめ (+12)
+                if (item.title.toLowerCase().includes(w)) {
+                    score += 12;
+                }
+                // タグに部分一致：強いおすすめ (+10)
+                item.tags.forEach(tag => {
+                    if (tag.toLowerCase().includes(w)) {
+                        score += 10;
+                    }
+                });
+                // カテゴリに部分一致：中程度 (+8)
+                if (item.category.toLowerCase().includes(w)) {
+                    score += 8;
+                }
+                // 説明文に含まれる：関連あり (+4)
+                if (item.description.toLowerCase().includes(w)) {
+                    score += 4;
+                }
+                // 住所に含まれる：関連あり (+2)
+                if (item.address.toLowerCase().includes(w)) {
+                    score += 2;
+                }
+            });
+
+            return { score, matchedCategory };
+        }
+
+        // --- STREAMING_CHUNK: Filtering and rendering activities based on search algorithm... -->
         // --- 画面レンダリング ---
         function renderActivities() {
             const container = document.getElementById('activity-container');
@@ -678,31 +846,53 @@
             const noResultsDesc = document.getElementById('no-results-desc');
             container.innerHTML = '';
 
-            // 各データの現在地からの距離を計算
+            // 各データの現在地からの距離と、検索おすすめスコアを計算
             let computedList = activities.map(item => {
                 const distance = calculateDistance(currentLat, currentLng, item.lat, item.lng);
-                return { ...item, distance: distance };
+                const rel = calculateRelevanceScore(item, searchQuery);
+                return { 
+                    ...item, 
+                    distance: distance, 
+                    relevanceScore: rel.score,
+                    matchedCategory: rel.matchedCategory 
+                };
             });
 
-            // 距離順にソート
-            computedList.sort((a, b) => a.distance - b.distance);
+            // 検索ワードがある場合は【おすすめ度（スコア）】の降順 ➔ その中で【距離】の昇順でソート
+            if (searchQuery !== '') {
+                computedList.sort((a, b) => {
+                    if (b.relevanceScore !== a.relevanceScore) {
+                        return b.relevanceScore - a.relevanceScore; // おすすめ度が高い順
+                    }
+                    return a.distance - b.distance; // スコアが同じなら距離が近い順
+                });
+            } else {
+                // 検索していない場合は、シンプルに【距離】の昇順でソート
+                computedList.sort((a, b) => a.distance - b.distance);
+            }
 
             // フィルター・表示モード適用
             let filteredList = computedList.filter(item => {
-                // 表示モードが「お気に入り」の場合
+                // 表示モードフィルター
                 if (currentMode === 'favorites' && !userFavorites.includes(item.id)) {
                     return false;
                 }
-                // 表示モードが「マイ予約」の場合
                 if (currentMode === 'bookings' && !userBookings.some(b => b.activityId === item.id)) {
                     return false;
                 }
 
-                // タグ・予算フィルター (「さがす」モード中のみ適用)
+                // 「すべて（さがす）」モード時のフィルタリング
                 if (currentMode === 'all') {
+                    // キーワード検索が実行されているとき、スコアが0点（全く不一致）のものは除外
+                    if (searchQuery !== '' && item.relevanceScore === 0) {
+                        return false;
+                    }
+
+                    // 気分タグフィルター
                     if (currentTagFilter !== 'all' && !item.tags.includes(currentTagFilter)) {
                         return false;
                     }
+                    // 予算フィルター
                     if (currentBudgetFilter !== 'all') {
                         if (currentBudgetFilter === 0 && item.price !== 0) return false;
                         if (currentBudgetFilter === 1000 && item.price > 1000) return false;
@@ -712,7 +902,7 @@
                 return true;
             });
 
-            // バッジカウンター類の最新化
+            // バッジ類の最新化
             document.getElementById('results-count-badge').innerText = `${filteredList.length}件`;
             document.getElementById('fav-count').innerText = userFavorites.length;
             document.getElementById('booking-count').innerText = userBookings.length;
@@ -727,7 +917,7 @@
                     noResultsDesc.innerText = "詳細画面から「参加を申し込む」ボタンを押して登録してみよう！";
                 } else {
                     noResultsTitle.innerText = "見つかりませんでした";
-                    noResultsDesc.innerText = "条件をすこしゆるくして、もういちど探してみてください！";
+                    noResultsDesc.innerText = "キーワードを変えたり、条件をすこしゆるくして、もういちど探してみてください！";
                 }
                 return;
             } else {
@@ -739,18 +929,53 @@
                 const isFav = userFavorites.includes(item.id);
                 const favColorClass = isFav ? 'text-pink-500' : 'text-slate-300 hover:text-pink-400';
                 
-                // 予約状態のバッジ
+                // 予約状態および保護者同意状況バッジ
                 const booking = userBookings.find(b => b.activityId === item.id);
                 let bookingBadge = '';
                 if (booking) {
                     if (booking.needParent && !booking.hasConsent) {
-                        bookingBadge = `<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">⏳ 同意待ち</span>`;
+                        bookingBadge = `<span class="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md animate-pulse flex items-center gap-1">⏳ 保護者同意待ち</span>`;
                     } else {
-                        bookingBadge = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">✅ 予約確定 (${booking.people})</span>`;
+                        bookingBadge = `<span class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">✅ 予約確定 (${booking.people})</span>`;
                     }
                 }
 
-                // タグのバッジ
+                // 常時表示される「要保護者承諾」のバッジ
+                let parentRequiredLabel = '';
+                if (item.needParent) {
+                    parentRequiredLabel = `
+                        <div class="absolute top-2.5 left-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                            <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                            <span>保護者承諾が必要</span>
+                        </div>
+                    `;
+                } else {
+                    parentRequiredLabel = `
+                        <div class="absolute top-2.5 left-2.5 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md">
+                            ${item.category}
+                        </div>
+                    `;
+                }
+
+                // 【おすすめ検索機能】検索カテゴリに応じたおすすめ表示バッジ
+                let recommendBadge = '';
+                if (searchQuery !== '' && item.relevanceScore > 0 && item.matchedCategory) {
+                    let emoji = "🌟";
+                    let color = "from-cyan-500 to-blue-500";
+                    if (item.matchedCategory === "海") { emoji = "🌊"; color = "from-sky-500 to-blue-600"; }
+                    else if (item.matchedCategory === "山") { emoji = "⛰️"; color = "from-emerald-500 to-teal-600"; }
+                    else if (item.matchedCategory === "川") { emoji = "💧"; color = "from-blue-400 to-indigo-500"; }
+                    else if (item.matchedCategory === "空") { emoji = "✨"; color = "from-indigo-600 to-purple-600"; }
+                    else if (item.matchedCategory === "雪") { emoji = "❄️"; color = "from-slate-400 to-blue-300"; }
+                    else if (item.matchedCategory === "無料") { emoji = "👛"; color = "from-amber-500 to-orange-500"; }
+
+                    recommendBadge = `
+                        <div class="absolute bottom-2.5 left-2.5 bg-gradient-to-r ${color} text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1 animate-bounce">
+                            <span>${emoji} ${item.matchedCategory}のおすすめ</span>
+                        </div>
+                    `;
+                }
+
                 const tagsHtml = item.tags.map(tag => 
                     `<span class="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">#${tag}</span>`
                 ).join(' ');
@@ -763,9 +988,10 @@
                     <!-- 画像 -->
                     <div class="h-44 w-full relative bg-slate-50 overflow-hidden">
                         <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onerror="this.src='https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80'">
-                        <div class="absolute top-2.5 left-2.5 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wide">
-                            ${item.category}
-                        </div>
+                        
+                        ${parentRequiredLabel}
+                        ${recommendBadge}
+                        
                         <div class="absolute top-2.5 right-12">
                             ${bookingBadge}
                         </div>
@@ -793,7 +1019,7 @@
                                     <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i>
                                     お小遣い: <strong class="text-slate-700">${item.priceText}</strong>
                                 </span>
-                                ${item.needParent ? `<span class="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">保護者承諾要</span>` : ''}
+                                ${item.needParent ? `<span class="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i>要承諾</span>` : ''}
                             </div>
                             
                             <!-- タグ -->
@@ -807,6 +1033,7 @@
             });
         }
 
+        // --- STREAMING_CHUNK: Integrating GPS functions... -->
         // --- GPSでの現在地取得 ---
         function getCurrentLocation() {
             const statusText = document.getElementById('location-status-text');
@@ -880,6 +1107,7 @@
             renderActivities();
         }
 
+        // --- STREAMING_CHUNK: Designing Filter Logic... -->
         // --- フィルター機能 ---
         function toggleTagFilter(tag) {
             currentTagFilter = tag;
@@ -913,6 +1141,7 @@
             renderActivities();
         }
 
+        // --- STREAMING_CHUNK: Managing detailed Modal components... -->
         // --- 詳細モーダルの制御 ---
         let activeModalId = null;
 
@@ -942,6 +1171,7 @@
             const bookingBtn = document.getElementById('modal-booking-btn');
             const consentBox = document.getElementById('parental-consent-box');
             const consentCheck = document.getElementById('consent-check');
+            const demoApprove = document.getElementById('demo-approve-container');
 
             consentCheck.checked = false;
 
@@ -949,19 +1179,22 @@
                 // 既に予約されている場合
                 bookingSetup.classList.add('hidden');
                 bookedStatus.classList.remove('hidden');
-                consentBox.classList.add('hidden'); // すでに予約されている時はチェックボックスを隠す
+                consentBox.classList.add('hidden'); 
 
                 // 予約情報の表示設定
                 const statusBadge = document.getElementById('booked-status-badge');
                 if (booking.needParent && !booking.hasConsent) {
-                    statusBadge.innerText = "⏳ 保護者の確認待ち";
-                    statusBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800";
+                    statusBadge.innerText = "⏳ 保護者同意待ち";
+                    statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white shadow-sm animate-pulse";
+                    demoApprove.classList.remove('hidden'); // 承認待ちのときだけデモ用承認ボタンを表示
                 } else {
                     statusBadge.innerText = "✅ 予約確定";
-                    statusBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800";
+                    statusBadge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm";
+                    demoApprove.classList.add('hidden');
                 }
 
-                document.getElementById('booked-people-text').innerText = booking.people;
+                // 登録された人数をプルダウンに同期させる
+                document.getElementById('booked-people-select').value = booking.people;
                 document.getElementById('booked-date-text').innerText = booking.date;
 
                 // ボタンの表示切り替え（キャンセルできるようにする）
@@ -971,6 +1204,7 @@
                 // まだ予約されていない場合
                 bookingSetup.classList.remove('hidden');
                 bookedStatus.classList.add('hidden');
+                demoApprove.classList.add('hidden');
 
                 if (item.needParent) {
                     consentBox.classList.remove('hidden');
@@ -1018,6 +1252,22 @@
             updateModalFavBtnState(activeModalId);
         }
 
+        // --- ★予約の人数をその場で変更してアップデートする関数 ---
+        function updateBookingPeople(newPeople) {
+            if (activeModalId === null) return;
+            const booking = userBookings.find(b => b.activityId === activeModalId);
+            if (!booking) return;
+
+            // 人数を変更
+            booking.people = newPeople;
+            localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
+            
+            // 画面を再構成
+            renderActivities();
+            showToast(`👥 行く人数を「${newPeople}」に更新しました！`, "success");
+        }
+
+        // --- STREAMING_CHUNK: Implementing customized dialog for booking confirmation... -->
         // --- 参加申し込み / キャンセル アクション ---
         function bookingAction() {
             if (activeModalId === null) return;
@@ -1025,15 +1275,18 @@
             const bookingIndex = userBookings.findIndex(b => b.activityId === activeModalId);
 
             if (bookingIndex > -1) {
-                // キャンセル処理
-                const confirmCancel = confirm(`「${item.title}」の予約予約をキャンセルしますか？`);
-                if (confirmCancel) {
-                    userBookings.splice(bookingIndex, 1);
-                    localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
-                    closeModal();
-                    renderActivities();
-                    showToast("🗑️ 予約をキャンセルしました", "info");
-                }
+                // カスタム確認モーダルでキャンセルを実行（confirmの排除）
+                showConfirmDialog(
+                    "予約をキャンセルしますか？",
+                    `「${item.title}」の予約予定をキャンセルし、行く予定リストから削除します。`,
+                    () => {
+                        userBookings.splice(bookingIndex, 1);
+                        localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
+                        closeModal();
+                        renderActivities();
+                        showToast("🗑️ 予約予定をキャンセルしました", "info");
+                    }
+                );
                 return;
             }
 
@@ -1042,10 +1295,9 @@
             const selectedPeople = peopleSelect.value;
             const hasConsent = document.getElementById('consent-check').checked;
 
-            // 保護者同意チェック確認
+            // 同意チェックなしでも承諾待ちリストに「強制登録」する（要件回収）
             if (item.needParent && !hasConsent) {
-                showToast("⚠️ 保護者の同意チェックを入れてください。", "warning");
-                return;
+                showToast("⚠️ 保護者の同意チェックが未完了ですが、承諾待ちとして登録します。", "warning");
             }
 
             // 現在日付の取得
@@ -1057,7 +1309,7 @@
                 activityId: item.id,
                 people: selectedPeople,
                 needParent: item.needParent,
-                hasConsent: hasConsent,
+                hasConsent: false, // デモ用に最初は必ず承認待ち状態
                 date: dateStr
             };
 
@@ -1071,6 +1323,49 @@
             showSuccessNotification(item, newBooking);
         }
 
+        // --- STREAMING_CHUNK: Crafting Confirmation alerts and success notifications... -->
+        // --- カスタム確認ダイアログシステム (標準のconfirm代替) ---
+        let currentConfirmAction = null;
+        
+        function showConfirmDialog(title, description, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = description;
+            
+            currentConfirmAction = onConfirm;
+            
+            modal.classList.remove('hidden');
+            
+            document.getElementById('confirm-cancel-btn').onclick = () => {
+                modal.classList.add('hidden');
+                currentConfirmAction = null;
+            };
+            
+            document.getElementById('confirm-ok-btn').onclick = () => {
+                if (currentConfirmAction) {
+                    currentConfirmAction();
+                }
+                modal.classList.add('hidden');
+                currentConfirmAction = null;
+            };
+        }
+
+        // --- 【デモ機能】保護者としての疑似承認処理 ---
+        function demoApproveAction() {
+            if (activeModalId === null) return;
+            const booking = userBookings.find(b => b.activityId === activeModalId);
+            if (!booking) return;
+
+            booking.hasConsent = true;
+            localStorage.setItem('cocokara_nature_bookings', JSON.stringify(userBookings));
+            
+            // モーダル表示内容をリロード
+            openModal(activeModalId);
+            renderActivities();
+            
+            showToast("👨‍👩‍👦 保護者によって予約が承認されました！予約確定です。", "success");
+        }
+
         // --- 予約完了おめでとう画面 ---
         function showSuccessNotification(item, booking) {
             const confirmDiv = document.createElement('div');
@@ -1078,17 +1373,18 @@
             confirmDiv.id = "booking-success-modal";
             
             let statusSection = `
-                <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-2xl border border-blue-200 text-left space-y-1">
-                    <p><strong>🎉 予約が完了しました！</strong></p>
+                <div class="bg-blue-50 text-blue-800 text-xs p-3 rounded-2xl border border-blue-200 text-left space-y-1 shadow-sm">
+                    <p class="flex items-center gap-1"><strong>🎉 予約が確定しました！</strong></p>
                     <p class="text-[10px] text-blue-700/80">行く日までに移動手段（バス・電車の時刻表など）をチェックしておこう！</p>
                 </div>
             `;
 
             if (item.needParent) {
                 statusSection = `
-                    <div class="bg-amber-50 text-amber-800 text-xs p-3 rounded-2xl border border-amber-200 text-left space-y-1">
-                        <p><strong>⏳ 保護者同意の確認まち</strong></p>
-                        <p class="text-[10px] text-amber-700/80">登録した保護者に同意確認の案内を送りました。保護者の確認が取れ次第、予約が確定します！</p>
+                    <div class="bg-amber-50 text-amber-800 text-xs p-3 rounded-2xl border border-amber-200 text-left space-y-1 shadow-sm border-dashed">
+                        <p class="flex items-center gap-1"><strong>⏳ 保護者承諾待ち（確認メール送信済）</strong></p>
+                        <p class="text-[10px] text-amber-700/80">登録された保護者の連絡先へ同意確認リンクを送信しました。保護者による承認が完了すると「予約確定」になります。</p>
+                        <p class="text-[9px] bg-amber-200/50 text-amber-900 p-1 rounded font-bold mt-1 text-center">💡 デモ機能: 「マイ予約」から詳細画面を開き「保護者として承認」がテストできます！</p>
                     </div>
                 `;
             }
@@ -1099,20 +1395,19 @@
                         <i class="fa-solid fa-circle-check animate-bounce"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-slate-800 text-lg font-title">申し込みを受け付けました！</h3>
-                        <p class="text-xs text-slate-500 mt-1">「マイ予約」からいつでも確認できます。</p>
+                        <h3 class="font-bold text-slate-800 text-lg font-title">申し込みを送信しました！</h3>
+                        <p class="text-xs text-slate-500 mt-1">「マイ予約」タブからステータスを確認できます。</p>
                     </div>
                     
                     ${statusSection}
 
-                    <div class="bg-slate-50 p-3 rounded-2xl text-left text-xs text-slate-600 space-y-1">
+                    <div class="bg-slate-50 p-3 rounded-2xl text-left text-xs text-slate-600 space-y-1 border border-slate-100">
                         <p>🔹 <strong>アクティビティ:</strong> ${item.title}</p>
                         <p>🔹 <strong>行く人数:</strong> ${booking.people}</p>
                         <p>🔹 <strong>場所:</strong> ${item.address}</p>
-                        <p>🔹 <strong>予算目安:</strong> ${item.priceText}</p>
                     </div>
 
-                    <button onclick="document.getElementById('booking-success-modal').remove()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+                    <button onclick="document.getElementById('booking-success-modal').remove()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md">
                         確認した！
                     </button>
                 </div>
@@ -1120,6 +1415,7 @@
             document.body.appendChild(confirmDiv);
         }
 
+        // --- STREAMING_CHUNK: Toast notification logic... -->
         // --- トースト通知システム ---
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
